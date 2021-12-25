@@ -1,9 +1,11 @@
+import zlib
 
 /// Compression Algorithm type
 public struct CompressionAlgorithm: CustomStringConvertible {
     fileprivate enum AlgorithmEnum: String {
         case gzip
         case deflate
+        case ambiguousPNG
     }
     fileprivate let algorithm: AlgorithmEnum
     
@@ -17,6 +19,8 @@ public struct CompressionAlgorithm: CustomStringConvertible {
             return ZlibCompressor(windowBits: 16 + 15)
         case .deflate:
             return ZlibCompressor(windowBits: 15)
+        case .ambiguousPNG:
+            return AmbiguousPNGCompressor(level: 9, windowBits: -15)
         }
     }
     
@@ -27,10 +31,12 @@ public struct CompressionAlgorithm: CustomStringConvertible {
             return ZlibDecompressor(windowBits: 16 + 15)
         case .deflate:
             return ZlibDecompressor(windowBits: 15)
+        case .ambiguousPNG:
+            return ZlibDecompressor(windowBits: -15)
         }
     }
     
     public static let gzip = CompressionAlgorithm(algorithm: .gzip)
     public static let deflate = CompressionAlgorithm(algorithm: .deflate)
+    public static let ambiguousPNG = CompressionAlgorithm(algorithm: .ambiguousPNG)
 }
-

@@ -49,6 +49,7 @@ public enum CompressNIOFlush {
     case no
     /// ensure all data that has been read has been flushed
     case sync
+    case full
     /// finish compressing and do a full flush
     case finish
 }
@@ -124,4 +125,3 @@ extension NIOCompressor {
         }
     }
 }
-

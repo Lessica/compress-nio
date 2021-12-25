@@ -1,4 +1,3 @@
-
 import NIO
 
 // compress/decompress extensions to ByteBuffer

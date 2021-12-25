@@ -1,14 +1,15 @@
-
 import CCompressZlib
 import NIO
 
 /// Compressor using Zlib
 class ZlibCompressor: NIOCompressor {
+    let level: Int
     let windowBits: Int
     var stream: z_stream
     var isActive: Bool
 
-    init(windowBits: Int) {
+    init(level: Int = Int(Z_DEFAULT_COMPRESSION), windowBits: Int) {
+        self.level = level
         self.windowBits = windowBits
         self.isActive = false
         self.window = nil
@@ -17,7 +18,6 @@ class ZlibCompressor: NIOCompressor {
         self.stream.zalloc = nil
         self.stream.zfree = nil
         self.stream.opaque = nil
-
     }
 
     deinit {
@@ -28,6 +28,12 @@ class ZlibCompressor: NIOCompressor {
 
     var window: ByteBuffer?
 
+    func deflate(from: inout ByteBuffer, to: inout ByteBuffer) throws {
+        try startStream()
+        try streamDeflate(from: &from, to: &to, flush: .finish)
+        try finishStream()
+    }
+
     func startStream() throws {
         assert(!isActive)
 
@@ -36,7 +42,7 @@ class ZlibCompressor: NIOCompressor {
         stream.zfree = nil
         stream.opaque = nil
 
-        let rt = CCompressZlib_deflateInit2(&stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, Int32(windowBits), 8, Z_DEFAULT_STRATEGY)
+        let rt = CCompressZlib_deflateInit2(&stream, Int32(level), Z_DEFLATED, Int32(windowBits), 8, Z_DEFAULT_STRATEGY)
         switch rt {
         case Z_MEM_ERROR:
             throw CompressNIOError.noMoreMemory
@@ -65,6 +71,8 @@ class ZlibCompressor: NIOCompressor {
                 flag = Z_NO_FLUSH
             case .sync:
                 flag = Z_SYNC_FLUSH
+            case .full:
+                flag = Z_FULL_FLUSH
             case .finish:
                 flag = Z_FINISH
             }
